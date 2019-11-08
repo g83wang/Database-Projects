@@ -8,7 +8,7 @@ EXEC SQL INCLUDE SQLCA;
 
 EXEC SQL BEGIN DECLARE SECTION;
    char db[6] = "cs348";
-   char sname[70], cname[70], cnum[7], day[20], time[10], room[7], snum[8], term[10];
+   char pname[70], sname[70], cname[70], cnum[7], day[20], time[10], room[7], input[8], term[10];
    short section;
 
 EXEC SQL END DECLARE SECTION;
@@ -25,16 +25,15 @@ int main(int argc, char *argv[]) {
 
     printf("Student Number: %s \n", argv[1]);
 
-    strncpy(snum,argv[1],8);
+    strncpy(input,argv[1],8);
 
     EXEC SQL SELECT s.sname INTO :sname
             FROM Student s
-            WHERE s.snum = :snum; 
+            WHERE s.snum = :input; 
 
-
-
-    EXEC SQL GOTO nodata;
-
+    EXEC SQL SELECT p.pname INTO :pname
+            FROM Professor p
+            WHERE p.pnum = :input; 
 
     EXEC SQL SELECT DISTINCT e.term INTO :term
             FROM Enrollment e
@@ -47,28 +46,51 @@ int main(int argc, char *argv[]) {
                 );  
 
     EXEC SQL DECLARE schedule CURSOR FOR 
-             SELECT c.cname, c.cnum, se.day, se.section, se.time, se.room, s.sname 
-             FROM Student s, Schedule se, Enrollment e, Course c
-             WHERE s.snum = :snum
-               AND e.snum = s.snum
-               AND se.cnum = e.cnum
-               AND c.cnum = e.cnum
-               AND not exists (
-                   SELECT *
-                   FROM Mark m
-                   WHERE m.term = e.term
+            SELECT c.cname, c.cnum, se.day, se.section, se.time, se.room
+            FROM Student s, Schedule se, Enrollment e, Course c
+            WHERE s.snum = :input
+                AND e.snum = s.snum
+                AND se.cnum = e.cnum
+                AND c.cnum = e.cnum
+                AND not exists (
+                    SELECT *
+                    FROM Mark m
+                    WHERE m.term = e.term
                         AND m.cnum = e.cnum  
                         AND m.section = e.section
                )
-               ORDER BY se.day;
+            UNION
+            SELECT ce.cname, ce.cnum, se.day, se.section, se.time, se.room
+            FROM Schedule se, Class c, Professor p, Course ce
+            WHERE p.pnum = :input
+                AND c.pnum = p.pnum
+                AND c.cnum = se.cnum
+                AND c.term = se.term
+                AND c.section = se.section
+                AND c.cnum = ce.cnum
+                AND not exists (
+                    SELECT *
+                    FROM Mark m, Enrollment e
+                    WHERE m.term = e.term
+                        AND m.cnum = e.cnum  
+                        AND m.section = e.section
+                        AND m.cnum = c.cnum
+                        AND m.term = c.term
+                        AND m.section = c.section
+                )
+            ;
 
     EXEC SQL OPEN schedule;
     EXEC SQL WHENEVER NOT FOUND GO TO end;
-    printf("Schedule for %s (%s) and term<%s>\n", sname, snum, term);
+    if (sname[0] == '\0'){
+        printf("Schedule for %s (%s) and term<%s>\n", pname, input, term);
+    } else {
+        printf("Schedule for %s (%s) and term<%s>\n", sname, input, term);
+    }
+
     printf("-------\n");
     for (;;) {
-        EXEC SQL FETCH schedule INTO :cname, :cnum, :day, :section, :time, :room, :sname;
-        EXEC SQL WHENEVER SQLCODE=100 GO TO nodata;
+        EXEC SQL FETCH schedule INTO :cname, :cnum, :day, :section, :time, :room;
         printf("%s:  %s (%s) %d %s %s\n", day, cname, cnum, section, time, room);
     };
 

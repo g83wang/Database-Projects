@@ -1,6 +1,6 @@
 static char sqla_program_id[292] = 
 {
- 172,0,65,69,65,85,65,73,66,65,109,106,86,72,76,106,48,49,49,49,
+ 172,0,65,69,65,85,65,73,108,65,117,74,87,72,76,106,48,49,49,49,
  49,32,50,32,32,32,32,32,32,32,32,32,8,0,89,51,51,52,90,72,
  85,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -55,7 +55,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 #line 9 "schedule.sqc"
 
    char db[6] = "cs348";
-   char sname[70], cname[70], cnum[7], day[20], time[10], room[7], snum[8], term[10];
+   char pname[70], sname[70], cname[70], cnum[7], day[20], time[10], room[7], input[8], term[10];
    short section;
 
 
@@ -118,13 +118,13 @@ EXEC SQL CONNECT TO :db;
 
     printf("Student Number: %s \n", argv[1]);
 
-    strncpy(snum,argv[1],8);
+    strncpy(input,argv[1],8);
 
     
 /*
 EXEC SQL SELECT s.sname INTO :sname
             FROM Student s
-            WHERE s.snum = :snum;
+            WHERE s.snum = :input;
 */
 
 {
@@ -137,7 +137,7 @@ EXEC SQL SELECT s.sname INTO :sname
 #line 32 "schedule.sqc"
       sql_setdlist[0].sqltype = 460; sql_setdlist[0].sqllen = 8;
 #line 32 "schedule.sqc"
-      sql_setdlist[0].sqldata = (void*)snum;
+      sql_setdlist[0].sqldata = (void*)input;
 #line 32 "schedule.sqc"
       sql_setdlist[0].sqlind = 0L;
 #line 32 "schedule.sqc"
@@ -171,21 +171,56 @@ EXEC SQL SELECT s.sname INTO :sname
 #line 32 "schedule.sqc"
  
 
-
-
     
 /*
-EXEC SQL GOTO nodata;
+EXEC SQL SELECT p.pname INTO :pname
+            FROM Professor p
+            WHERE p.pnum = :input;
 */
 
-/*
-SQL0104N  An unexpected token "END-OF-STATEMENT" was found 
-following "GOTO nodata".  Expected tokens may include:  
-"JOIN <joined_table>".  SQLSTATE=42601
+{
+#line 36 "schedule.sqc"
+  sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
+#line 36 "schedule.sqc"
+  sqlaaloc(2,1,4,0L);
+    {
+      struct sqla_setdata_list sql_setdlist[1];
+#line 36 "schedule.sqc"
+      sql_setdlist[0].sqltype = 460; sql_setdlist[0].sqllen = 8;
+#line 36 "schedule.sqc"
+      sql_setdlist[0].sqldata = (void*)input;
+#line 36 "schedule.sqc"
+      sql_setdlist[0].sqlind = 0L;
+#line 36 "schedule.sqc"
+      sqlasetdata(2,0,1,sql_setdlist,0L,0L);
+    }
+#line 36 "schedule.sqc"
+  sqlaaloc(3,1,5,0L);
+    {
+      struct sqla_setdata_list sql_setdlist[1];
+#line 36 "schedule.sqc"
+      sql_setdlist[0].sqltype = 460; sql_setdlist[0].sqllen = 70;
+#line 36 "schedule.sqc"
+      sql_setdlist[0].sqldata = (void*)pname;
+#line 36 "schedule.sqc"
+      sql_setdlist[0].sqlind = 0L;
+#line 36 "schedule.sqc"
+      sqlasetdata(3,0,1,sql_setdlist,0L,0L);
+    }
+#line 36 "schedule.sqc"
+  sqlacall((unsigned short)24,2,2,3,0L);
+#line 36 "schedule.sqc"
+  if (sqlca.sqlcode < 0)
+  {
+    sqlastop(0L);
+    goto error;
+  }
+#line 36 "schedule.sqc"
+  sqlastop(0L);
+}
 
-*/
-
-
+#line 36 "schedule.sqc"
+ 
 
     
 /*
@@ -201,56 +236,75 @@ EXEC SQL SELECT DISTINCT e.term INTO :term
 */
 
 {
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 47 "schedule.sqc"
-  sqlaaloc(3,1,4,0L);
+#line 46 "schedule.sqc"
+  sqlaaloc(3,1,6,0L);
     {
       struct sqla_setdata_list sql_setdlist[1];
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
       sql_setdlist[0].sqltype = 460; sql_setdlist[0].sqllen = 10;
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
       sql_setdlist[0].sqldata = (void*)term;
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
       sql_setdlist[0].sqlind = 0L;
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
       sqlasetdata(3,0,1,sql_setdlist,0L,0L);
     }
-#line 47 "schedule.sqc"
-  sqlacall((unsigned short)24,2,0,3,0L);
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
+  sqlacall((unsigned short)24,3,0,3,0L);
+#line 46 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 47 "schedule.sqc"
+#line 46 "schedule.sqc"
   
 
     
 /*
 EXEC SQL DECLARE schedule CURSOR FOR 
-             SELECT c.cname, c.cnum, se.day, se.section, se.time, se.room, s.sname 
-             FROM Student s, Schedule se, Enrollment e, Course c
-             WHERE s.snum = :snum
-               AND e.snum = s.snum
-               AND se.cnum = e.cnum
-               AND c.cnum = e.cnum
-               AND not exists (
-                   SELECT *
-                   FROM Mark m
-                   WHERE m.term = e.term
+            SELECT c.cname, c.cnum, se.day, se.section, se.time, se.room
+            FROM Student s, Schedule se, Enrollment e, Course c
+            WHERE s.snum = :input
+                AND e.snum = s.snum
+                AND se.cnum = e.cnum
+                AND c.cnum = e.cnum
+                AND not exists (
+                    SELECT *
+                    FROM Mark m
+                    WHERE m.term = e.term
                         AND m.cnum = e.cnum  
                         AND m.section = e.section
                )
-               ORDER BY se.day;
+            UNION
+            SELECT ce.cname, ce.cnum, se.day, se.section, se.time, se.room
+            FROM Schedule se, Class c, Professor p, Course ce
+            WHERE p.pnum = :input
+                AND c.pnum = p.pnum
+                AND c.cnum = se.cnum
+                AND c.term = se.term
+                AND c.section = se.section
+                AND c.cnum = ce.cnum
+                AND not exists (
+                    SELECT *
+                    FROM Mark m, Enrollment e
+                    WHERE m.term = e.term
+                        AND m.cnum = e.cnum  
+                        AND m.section = e.section
+                        AND m.cnum = c.cnum
+                        AND m.term = c.term
+                        AND m.section = c.section
+                )
+            ;
 */
 
-#line 63 "schedule.sqc"
+#line 81 "schedule.sqc"
 
 
     
@@ -259,132 +313,126 @@ EXEC SQL OPEN schedule;
 */
 
 {
-#line 65 "schedule.sqc"
+#line 83 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 65 "schedule.sqc"
-  sqlaaloc(2,1,5,0L);
+#line 83 "schedule.sqc"
+  sqlaaloc(2,2,7,0L);
     {
-      struct sqla_setdata_list sql_setdlist[1];
-#line 65 "schedule.sqc"
+      struct sqla_setdata_list sql_setdlist[2];
+#line 83 "schedule.sqc"
       sql_setdlist[0].sqltype = 460; sql_setdlist[0].sqllen = 8;
-#line 65 "schedule.sqc"
-      sql_setdlist[0].sqldata = (void*)snum;
-#line 65 "schedule.sqc"
+#line 83 "schedule.sqc"
+      sql_setdlist[0].sqldata = (void*)input;
+#line 83 "schedule.sqc"
       sql_setdlist[0].sqlind = 0L;
-#line 65 "schedule.sqc"
-      sqlasetdata(2,0,1,sql_setdlist,0L,0L);
+#line 83 "schedule.sqc"
+      sql_setdlist[1].sqltype = 460; sql_setdlist[1].sqllen = 8;
+#line 83 "schedule.sqc"
+      sql_setdlist[1].sqldata = (void*)input;
+#line 83 "schedule.sqc"
+      sql_setdlist[1].sqlind = 0L;
+#line 83 "schedule.sqc"
+      sqlasetdata(2,0,2,sql_setdlist,0L,0L);
     }
-#line 65 "schedule.sqc"
-  sqlacall((unsigned short)26,3,2,0,0L);
-#line 65 "schedule.sqc"
+#line 83 "schedule.sqc"
+  sqlacall((unsigned short)26,4,2,0,0L);
+#line 83 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 65 "schedule.sqc"
+#line 83 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 65 "schedule.sqc"
+#line 83 "schedule.sqc"
 
     
 /*
 EXEC SQL WHENEVER NOT FOUND GO TO end;
 */
 
-#line 66 "schedule.sqc"
+#line 84 "schedule.sqc"
 
-    printf("Schedule for %s (%s) and term<%s>\n", sname, snum, term);
+    if (sname[0] == '\0'){
+        printf("Schedule for %s (%s) and term<%s>\n", pname, input, term);
+    } else {
+        printf("Schedule for %s (%s) and term<%s>\n", sname, input, term);
+    }
+
     printf("-------\n");
     for (;;) {
         
 /*
-EXEC SQL FETCH schedule INTO :cname, :cnum, :day, :section, :time, :room, :sname;
+EXEC SQL FETCH schedule INTO :cname, :cnum, :day, :section, :time, :room;
 */
 
 {
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 70 "schedule.sqc"
-  sqlaaloc(3,7,6,0L);
+#line 93 "schedule.sqc"
+  sqlaaloc(3,6,8,0L);
     {
-      struct sqla_setdata_list sql_setdlist[7];
-#line 70 "schedule.sqc"
+      struct sqla_setdata_list sql_setdlist[6];
+#line 93 "schedule.sqc"
       sql_setdlist[0].sqltype = 460; sql_setdlist[0].sqllen = 70;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[0].sqldata = (void*)cname;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[0].sqlind = 0L;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[1].sqltype = 460; sql_setdlist[1].sqllen = 7;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[1].sqldata = (void*)cnum;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[1].sqlind = 0L;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[2].sqltype = 460; sql_setdlist[2].sqllen = 20;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[2].sqldata = (void*)day;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[2].sqlind = 0L;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[3].sqltype = 500; sql_setdlist[3].sqllen = 2;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[3].sqldata = (void*)&section;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[3].sqlind = 0L;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[4].sqltype = 460; sql_setdlist[4].sqllen = 10;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[4].sqldata = (void*)time;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[4].sqlind = 0L;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[5].sqltype = 460; sql_setdlist[5].sqllen = 7;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[5].sqldata = (void*)room;
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
       sql_setdlist[5].sqlind = 0L;
-#line 70 "schedule.sqc"
-      sql_setdlist[6].sqltype = 460; sql_setdlist[6].sqllen = 70;
-#line 70 "schedule.sqc"
-      sql_setdlist[6].sqldata = (void*)sname;
-#line 70 "schedule.sqc"
-      sql_setdlist[6].sqlind = 0L;
-#line 70 "schedule.sqc"
-      sqlasetdata(3,0,7,sql_setdlist,0L,0L);
+#line 93 "schedule.sqc"
+      sqlasetdata(3,0,6,sql_setdlist,0L,0L);
     }
-#line 70 "schedule.sqc"
-  sqlacall((unsigned short)25,3,0,3,0L);
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
+  sqlacall((unsigned short)25,4,0,3,0L);
+#line 93 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 70 "schedule.sqc"
+#line 93 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 70 "schedule.sqc"
-
-        
-/*
-EXEC SQL WHENEVER SQLCODE=100 GO TO nodata;
-*/
-
-/*
-SQL0104N  An unexpected token "SQLCODE" was found following 
-"WHENEVER".  Expected tokens may include:  "SQLERROR".
-
-*/
+#line 93 "schedule.sqc"
 
         printf("%s:  %s (%s) %d %s %s\n", day, cname, cnum, section, time, room);
     };
@@ -396,27 +444,27 @@ EXEC SQL CLOSE schedule;
 */
 
 {
-#line 76 "schedule.sqc"
+#line 98 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 76 "schedule.sqc"
-  sqlacall((unsigned short)20,3,0,0,0L);
-#line 76 "schedule.sqc"
+#line 98 "schedule.sqc"
+  sqlacall((unsigned short)20,4,0,0,0L);
+#line 98 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 76 "schedule.sqc"
+#line 98 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 76 "schedule.sqc"
+#line 98 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 76 "schedule.sqc"
+#line 98 "schedule.sqc"
 
     printf("Schedule for %s does not exist.", term);
     printf("-------\n");
@@ -426,27 +474,27 @@ EXEC SQL COMMIT;
 */
 
 {
-#line 79 "schedule.sqc"
+#line 101 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 79 "schedule.sqc"
+#line 101 "schedule.sqc"
   sqlacall((unsigned short)21,0,0,0,0L);
-#line 79 "schedule.sqc"
+#line 101 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 79 "schedule.sqc"
+#line 101 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 79 "schedule.sqc"
+#line 101 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 79 "schedule.sqc"
+#line 101 "schedule.sqc"
 
     
 /*
@@ -454,27 +502,27 @@ EXEC SQL CONNECT RESET;
 */
 
 {
-#line 80 "schedule.sqc"
+#line 102 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 80 "schedule.sqc"
+#line 102 "schedule.sqc"
   sqlacall((unsigned short)29,3,0,0,0L);
-#line 80 "schedule.sqc"
+#line 102 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 80 "schedule.sqc"
+#line 102 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 80 "schedule.sqc"
+#line 102 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 80 "schedule.sqc"
+#line 102 "schedule.sqc"
 
     exit(0);
     
@@ -485,27 +533,27 @@ EXEC SQL CLOSE schedule;
 */
 
 {
-#line 84 "schedule.sqc"
+#line 106 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 84 "schedule.sqc"
-  sqlacall((unsigned short)20,3,0,0,0L);
-#line 84 "schedule.sqc"
+#line 106 "schedule.sqc"
+  sqlacall((unsigned short)20,4,0,0,0L);
+#line 106 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 84 "schedule.sqc"
+#line 106 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 84 "schedule.sqc"
+#line 106 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 84 "schedule.sqc"
+#line 106 "schedule.sqc"
 
     printf("-------\n");
     
@@ -514,27 +562,27 @@ EXEC SQL COMMIT;
 */
 
 {
-#line 86 "schedule.sqc"
+#line 108 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 86 "schedule.sqc"
+#line 108 "schedule.sqc"
   sqlacall((unsigned short)21,0,0,0,0L);
-#line 86 "schedule.sqc"
+#line 108 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 86 "schedule.sqc"
+#line 108 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 86 "schedule.sqc"
+#line 108 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 86 "schedule.sqc"
+#line 108 "schedule.sqc"
 
     
 /*
@@ -542,27 +590,27 @@ EXEC SQL CONNECT RESET;
 */
 
 {
-#line 87 "schedule.sqc"
+#line 109 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 87 "schedule.sqc"
+#line 109 "schedule.sqc"
   sqlacall((unsigned short)29,3,0,0,0L);
-#line 87 "schedule.sqc"
+#line 109 "schedule.sqc"
   if (sqlca.sqlcode < 0)
   {
     sqlastop(0L);
     goto error;
   }
-#line 87 "schedule.sqc"
+#line 109 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 87 "schedule.sqc"
+#line 109 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 87 "schedule.sqc"
+#line 109 "schedule.sqc"
 
     exit(0);
 
@@ -573,7 +621,7 @@ error:
 EXEC SQL WHENEVER SQLERROR CONTINUE;
 */
 
-#line 92 "schedule.sqc"
+#line 114 "schedule.sqc"
 
 
     
@@ -582,21 +630,21 @@ EXEC SQL ROLLBACK;
 */
 
 {
-#line 94 "schedule.sqc"
+#line 116 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 94 "schedule.sqc"
+#line 116 "schedule.sqc"
   sqlacall((unsigned short)28,0,0,0,0L);
-#line 94 "schedule.sqc"
+#line 116 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 94 "schedule.sqc"
+#line 116 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 94 "schedule.sqc"
+#line 116 "schedule.sqc"
 
     
 /*
@@ -604,21 +652,21 @@ EXEC SQL CONNECT reset;
 */
 
 {
-#line 95 "schedule.sqc"
+#line 117 "schedule.sqc"
   sqlastrt(sqla_program_id, &sqla_rtinfo, &sqlca);
-#line 95 "schedule.sqc"
+#line 117 "schedule.sqc"
   sqlacall((unsigned short)29,3,0,0,0L);
-#line 95 "schedule.sqc"
+#line 117 "schedule.sqc"
   if (sqlca.sqlcode == 100)
   {
     sqlastop(0L);
     goto end;
   }
-#line 95 "schedule.sqc"
+#line 117 "schedule.sqc"
   sqlastop(0L);
 }
 
-#line 95 "schedule.sqc"
+#line 117 "schedule.sqc"
 
     exit(1);
 }
