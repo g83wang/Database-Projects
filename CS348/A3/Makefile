@@ -1,5 +1,5 @@
 # put the name of your application here:
-NAME= schedule
+NAME= conflicts
 
 ###############################################
 # don't touch anything below this line

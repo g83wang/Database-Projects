@@ -1,0 +1,79 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "util.h"
+
+
+EXEC SQL INCLUDE SQLCA; 
+
+EXEC SQL BEGIN DECLARE SECTION;
+   char db[6] = "cs348";
+   char input[20];
+   char sname[100], pname[100];
+   char day[20], time[20];
+   char cnum1[10], room1[10];
+   char cnum2[10], room2[10];
+   short section1;
+   short section2;
+
+EXEC SQL END DECLARE SECTION;
+
+int main(int argc, char *argv[]) {
+
+    char output[100];
+
+    EXEC SQL WHENEVER SQLERROR  GO TO error;
+
+    EXEC SQL CONNECT TO :db;
+
+    printf("Connected to CS348\n");
+
+    printf("Input Number: %s \n", argv[1]);
+
+    strncpy(input,argv[1],8);
+
+    EXEC SQL SELECT s.sname INTO :sname
+            FROM Student s
+            WHERE s.snum = :input; 
+
+    EXEC SQL SELECT p.pname INTO :pname
+            FROM Professor p
+            WHERE p.pnum = :input; 
+
+    EXEC SQL DECLARE conflict CURSOR FOR 
+            SELECT DISTINCT se1.day, se1.time, se1.cnum, se1.section, se1.room, se2.cnum, se2.section, se2.room  
+            FROM Schedule se1, Enrollment e1, Schedule se2, Enrollment e2
+            WHERE e1.snum = :input AND e2.snum = :input
+                AND e1.term = se1.term AND e2.term = se2.term
+                AND e1.section = se1.section AND e2.section = se2.section
+                AND e1.cnum = se1.cnum AND e2.cnum = se2.cnum
+                AND e1.term = e2.term AND se1.day = se2.day AND se1.time = se2.time AND se1.cnum <> se2.cnum
+                AND NOT EXISTS (
+                    SELECT *
+                    FROM Mark m
+                    WHERE (m.term = e1.term AND m.cnum = e1.cnum AND m.section = e1.section) OR
+                          (m.term = e2.term AND m.cnum = e2.cnum AND m.section = e2.section)
+                );
+            
+    EXEC SQL OPEN conflict;
+    EXEC SQL WHENEVER NOT FOUND GO TO end;
+
+    for (;;) {
+        EXEC SQL FETCH conflict INTO :day, :time, :cnum1, :section1, :room1, :cnum2, :section2, :room2;
+        printf("%s %s: %s(%d) %s -- %s(%d) %s\n", day, time, cnum1, section1, room1, cnum2, section2, room2);
+    };    
+    
+end:
+    EXEC SQL CLOSE conflict;
+    EXEC SQL COMMIT;
+    EXEC SQL CONNECT RESET;
+    exit(0);
+
+error:
+    check_error("My error",&sqlca);
+    EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+    EXEC SQL ROLLBACK;
+    EXEC SQL CONNECT reset;
+    exit(1);
+}

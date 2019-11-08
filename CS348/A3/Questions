@@ -1,4 +1,7 @@
 1. Time attribute representation
 2. Current term no mark
 3. Blank space after
-4. Day ordering
+4. WeekDay ordering
+5. Remove duplicates in conflict
+6. Same class section in different room, need to consider?
+
