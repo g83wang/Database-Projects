@@ -1,5 +1,5 @@
 # put the name of your application here:
-NAME= conflicts
+NAME= gpa
 
 ###############################################
 # don't touch anything below this line

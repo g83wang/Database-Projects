@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "util.h"
+
+
+EXEC SQL INCLUDE SQLCA; 
+
+EXEC SQL BEGIN DECLARE SECTION;
+   char db[6] = "cs348";
+   char input[20], sname[20], term[10];
+   float overall_gpa;
+   float term_gpa;
+
+EXEC SQL END DECLARE SECTION;
+
+int main(int argc, char *argv[]) {
+
+    char output[100];
+
+    EXEC SQL WHENEVER SQLERROR  GO TO error;
+
+    EXEC SQL CONNECT TO :db;
+
+    strncpy(input,argv[1],8);
+
+    EXEC SQL SELECT s.sname INTO :sname
+            FROM Student s
+            WHERE s.snum = :input; 
+
+    EXEC SQL SELECT DISTINCT 1.0 * sum(m.grade) / count(e.cnum) INTO :overall_gpa
+            FROM Mark m, Enrollment e
+            WHERE e.snum = :input
+                AND m.snum = e.snum;
+
+    EXEC SQL DECLARE gpa CURSOR FOR 
+            SELECT DISTINCT m.term, sum(m.grade) / count(e.cnum)
+            FROM Mark m, Enrollment e
+            WHERE e.snum = :input 
+                AND m.snum = e.snum 
+                AND m.cnum = e.cnum 
+                AND m.term = e.term
+            GROUP BY m.term
+            ORDER BY m.term;
+            
+    EXEC SQL OPEN gpa;
+    EXEC SQL WHENEVER NOT FOUND GO TO end;
+    printf("GPA for student \"%s\"(%s) is %.1f. \n", sname, input, overall_gpa);
+    for (;;) {
+        EXEC SQL FETCH gpa INTO :term, :term_gpa;
+        printf("%s %.1f \n", term, term_gpa);
+    };    
+    
+end:
+    EXEC SQL CLOSE gpa;
+    EXEC SQL COMMIT;
+    EXEC SQL CONNECT RESET;
+    exit(0);
+
+error:
+    check_error("My error",&sqlca);
+    EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+    EXEC SQL ROLLBACK;
+    EXEC SQL CONNECT reset;
+    exit(1);
+}
